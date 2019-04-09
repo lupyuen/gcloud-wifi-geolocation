@@ -11,12 +11,13 @@ import (
 )
 
 // DeviceState contains the state of the device: temperature (deg C), location and geolocation accuracy (in metres).
+// The fields must start with an uppercase letter because these fields will be exported for JSON deserialisation.
 type DeviceState struct {
-	device    string
-	tmp       float64
-	latitude  float64
-	longitude float64
-	accuracy  float64
+	Device    string
+	Tmp       float64
+	Latitude  float64
+	Longitude float64
+	Accuracy  float64
 }
 
 var (
@@ -43,13 +44,13 @@ func testDeviceStates() {
 
 	// Empty state with no values.
 	state := DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
-	state.tmp = 28.1
+	state.Tmp = 28.1
 
 	// Fetch an item that doesn't exist yet.
 	result, ok := deviceStates.Load(deviceID)
 	if ok {
 		state := result.(*DeviceState)
-		fmt.Printf("result: `%f` found for key: `hello`\n", state.tmp)
+		fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
 	} else {
 		fmt.Println("value not found for key: `hello`")
 	}
@@ -62,7 +63,7 @@ func testDeviceStates() {
 	result, ok = deviceStates.Load(deviceID)
 	if ok {
 		state := result.(*DeviceState)
-		fmt.Printf("result: `%f` found for key: `hello`\n", state.tmp)
+		fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
 	}
 }
 
@@ -86,12 +87,17 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Could not decode body: %v", err), http.StatusBadRequest)
 		return
 	}
-	if msg.device != "" {
-		if !math.IsNaN(msg.tmp) {
-			fmt.Printf("pushHandler: device=%s, tmp=%f\n", msg.device, msg.tmp)
-		} else if !math.IsNaN(msg.latitude) && !math.IsNaN(msg.longitude) && !math.IsNaN(msg.accuracy) {
-			fmt.Printf("pushHandler: device=%s, lat=%f, lng=%f, acc=%f\n", msg.device, msg.latitude, msg.longitude, msg.accuracy)
-		}
+	if msg.Device == "" {
+		http.Error(w, "Missing device", http.StatusBadRequest)
+		return
+	}
+	if !math.IsNaN(msg.Tmp) {
+		fmt.Printf("pushHandler: device=%s, tmp=%f\n", msg.Device, msg.Tmp)
+	} else if !math.IsNaN(msg.Latitude) && !math.IsNaN(msg.Longitude) && !math.IsNaN(msg.Accuracy) {
+		fmt.Printf("pushHandler: device=%s, lat=%f, lng=%f, acc=%f\n", msg.Device, msg.Latitude, msg.Longitude, msg.Accuracy)
+	} else {
+		http.Error(w, "Unknown message", http.StatusBadRequest)
+		return
 	}
 	fmt.Fprint(w, "\"OK\"")
 }
