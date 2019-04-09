@@ -3,16 +3,21 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"sync"
 )
 
-type deviceState struct {
+// DeviceState contains the state of the device: temperature and location.
+type DeviceState struct {
+	tmp       float64
+	latitude  float64
+	longitude float64
 }
 
 var (
-	//  Threadsafe map that maps device ID to device state.  It needs to be threadsafe because we will reading and writing concurrently.
+	// deviceStates is the threadsafe map that maps device ID to device state.  It needs to be threadsafe because we will reading and writing concurrently.
 	deviceStates sync.Map
 )
 
@@ -29,23 +34,30 @@ func main() {
 }
 
 func testDeviceStates() {
-	//  Fetch an item that doesn't exist yet.
 	deviceID := "hello"
+
+	// Empty state with no values.
+	state := DeviceState{math.NaN(), math.NaN(), math.NaN()}
+	state.tmp = 28.1
+
+	// Fetch an item that doesn't exist yet.
 	result, ok := deviceStates.Load(deviceID)
 	if ok {
-		fmt.Println(result.(string))
+		state := result.(*DeviceState)
+		fmt.Printf("result: `%f` found for key: `hello`\n", state.tmp)
 	} else {
 		fmt.Println("value not found for key: `hello`")
 	}
 
-	//  Store an item in the map.
-	deviceStates.Store("hello", "world")
+	// Store an item in the map.
+	deviceStates.Store(deviceID, &state)
 	fmt.Println("added value: `world` for key: `hello`")
 
 	// Fetch the item we just stored.
-	result, ok = deviceStates.Load("hello")
+	result, ok = deviceStates.Load(deviceID)
 	if ok {
-		fmt.Printf("result: `%s` found for key: `hello`\n", result.(string))
+		state := result.(*DeviceState)
+		fmt.Printf("result: `%f` found for key: `hello`\n", state.tmp)
 	}
 }
 
