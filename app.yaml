@@ -1,0 +1,7 @@
+#  See https://cloud.google.com/appengine/docs/standard/go111/config/appref
+runtime: go111
+instance_class: B1   #  Basic scaling
+
+basic_scaling: 
+  max_instances: 1   #  Only 1 instance allowed because the app is stateful.
+  idle_timeout: 10m  #  The instance will be shut down this amount of time after receiving its last request.
