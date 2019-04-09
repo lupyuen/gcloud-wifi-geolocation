@@ -8,6 +8,9 @@ import (
 	"sync"
 )
 
+type deviceState struct {
+}
+
 var (
 	//  Threadsafe map that maps device ID to device state.  It needs to be threadsafe because we will reading and writing concurrently.
 	deviceStates sync.Map
