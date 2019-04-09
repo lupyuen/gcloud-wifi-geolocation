@@ -84,7 +84,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		if !math.IsNaN(msg.Accuracy) {
 			state.Accuracy = msg.Accuracy
 		}
-		fmt.Printf("updated state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", msg.Device, msg.Tmp, msg.Latitude, msg.Longitude, msg.Accuracy)
+		fmt.Printf("updated state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", state.Device, state.Tmp, state.Latitude, state.Longitude, state.Accuracy)
 	}
 	fmt.Fprint(w, "\"OK\"")
 }
