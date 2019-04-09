@@ -39,36 +39,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
-func testDeviceStates() {
-	deviceID := "hello"
-
-	// Empty state with no values.
-	state := DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
-	state.Tmp = 28.1
-
-	// Fetch an item that doesn't exist yet.
-	result, ok := deviceStates.Load(deviceID)
-	if ok {
-		state := result.(*DeviceState)
-		fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
-	} else {
-		fmt.Println("value not found for key: `hello`")
-	}
-
-	// Store an item in the map.
-	deviceStates.Store(deviceID, &state)
-	fmt.Println("added value: `world` for key: `hello`")
-
-	// Fetch the item we just stored.
-	result, ok = deviceStates.Load(deviceID)
-	if ok {
-		state := result.(*DeviceState)
-		fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
-	}
-}
-
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	testDeviceStates()
 	if r.URL.Path == "/" {
 		fmt.Fprint(w, "Hello, World!")
 		return
@@ -77,11 +48,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pushHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: Verify the token.
 	/*
 		if r.URL.Query().Get("token") != token {
 			http.Error(w, "Bad token", http.StatusBadRequest)
 		}
 	*/
+	// Decode the received JSON.
 	msg := &DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
 	if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
 		http.Error(w, fmt.Sprintf("Could not decode body: %v", err), http.StatusBadRequest)
@@ -91,13 +64,57 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing device", http.StatusBadRequest)
 		return
 	}
-	if !math.IsNaN(msg.Tmp) {
-		fmt.Printf("pushHandler: device=%s, tmp=%f\n", msg.Device, msg.Tmp)
-	} else if !math.IsNaN(msg.Latitude) && !math.IsNaN(msg.Longitude) && !math.IsNaN(msg.Accuracy) {
-		fmt.Printf("pushHandler: device=%s, lat=%f, lng=%f, acc=%f\n", msg.Device, msg.Latitude, msg.Longitude, msg.Accuracy)
+	// Fetch the current state for the device.
+	result, loaded := deviceStates.LoadOrStore(msg.Device, msg)
+	if !loaded {
+		// State does not exist. We have already stored the message so do nothing.
+		fmt.Printf("new state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", msg.Device, msg.Tmp, msg.Latitude, msg.Longitude, msg.Accuracy)
 	} else {
-		http.Error(w, "Unknown message", http.StatusBadRequest)
-		return
+		// State already exists. We copy the received message into the current state.
+		state := result.(*DeviceState)
+		if !math.IsNaN(msg.Tmp) {
+			state.Tmp = msg.Tmp
+		}
+		if !math.IsNaN(msg.Latitude) {
+			state.Latitude = msg.Latitude
+		}
+		if !math.IsNaN(msg.Longitude) {
+			state.Longitude = msg.Longitude
+		}
+		if !math.IsNaN(msg.Accuracy) {
+			state.Accuracy = msg.Accuracy
+		}
+		fmt.Printf("updated state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", msg.Device, msg.Tmp, msg.Latitude, msg.Longitude, msg.Accuracy)
 	}
 	fmt.Fprint(w, "\"OK\"")
 }
+
+/*
+	func testDeviceStates() {
+		deviceID := "hello"
+
+		// Empty state with no values.
+		state := DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
+		state.Tmp = 28.1
+
+		// Fetch an item that doesn't exist yet.
+		result, ok := deviceStates.Load(deviceID)
+		if ok {
+			state := result.(*DeviceState)
+			fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
+		} else {
+			fmt.Println("value not found for key: `hello`")
+		}
+
+		// Store an item in the map.
+		deviceStates.Store(deviceID, &state)
+		fmt.Println("added value: `world` for key: `hello`")
+
+		// Fetch the item we just stored.
+		result, ok = deviceStates.Load(deviceID)
+		if ok {
+			state := result.(*DeviceState)
+			fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
+		}
+	}
+*/
