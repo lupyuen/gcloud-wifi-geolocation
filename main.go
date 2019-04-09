@@ -42,8 +42,17 @@ func main() {
 func pullHandler(w http.ResponseWriter, r *http.Request) {
 	device := r.URL.Query().Get("device")
 	if device == "" {
-		http.Error(w, "missing device", http.StatusBadRequest)
-		return
+		// Decode the received JSON.
+		msg := &DeviceState{}
+		if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
+			http.Error(w, fmt.Sprintf("Could not decode body: %v", err), http.StatusBadRequest)
+			return
+		}
+		device = msg.Device
+		if device == "" {
+			http.Error(w, "missing device", http.StatusBadRequest)
+			return
+		}
 	}
 	enc := json.NewEncoder(w)
 	m := map[string]float64{}
@@ -63,6 +72,7 @@ func pullHandler(w http.ResponseWriter, r *http.Request) {
 		if !math.IsNaN(state.Accuracy) {
 			m["accuracy"] = state.Accuracy
 		}
+		fmt.Printf("pull state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", state.Device, state.Tmp, state.Latitude, state.Longitude, state.Accuracy)
 	} else {
 		fmt.Printf("no state `%s`\n", device)
 	}

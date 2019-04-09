@@ -74,8 +74,8 @@ func TestIndexHandlerNotFound(t *testing.T) {
 }
 
 func pullDevice(t *testing.T, device string, expected string) {
-	b := []byte("{}")
-	req, err := http.NewRequest("POST", "/pull?device="+device, bytes.NewBuffer(b))
+	b := []byte(`{"device": "` + device + `"}`)
+	req, err := http.NewRequest("POST", "/pull", bytes.NewBuffer(b))
 	if err != nil {
 		t.Fatal(err)
 	}
