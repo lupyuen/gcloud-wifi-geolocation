@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -9,11 +10,13 @@ import (
 	"sync"
 )
 
-// DeviceState contains the state of the device: temperature and location.
+// DeviceState contains the state of the device: temperature (deg C), location and geolocation accuracy (in metres).
 type DeviceState struct {
+	device    string
 	tmp       float64
 	latitude  float64
 	longitude float64
+	accuracy  float64
 }
 
 var (
@@ -23,6 +26,8 @@ var (
 
 func main() {
 	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/push", pushHandler)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -37,7 +42,7 @@ func testDeviceStates() {
 	deviceID := "hello"
 
 	// Empty state with no values.
-	state := DeviceState{math.NaN(), math.NaN(), math.NaN()}
+	state := DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
 	state.tmp = 28.1
 
 	// Fetch an item that doesn't exist yet.
@@ -68,4 +73,25 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.NotFound(w, r)
+}
+
+func pushHandler(w http.ResponseWriter, r *http.Request) {
+	/*
+		if r.URL.Query().Get("token") != token {
+			http.Error(w, "Bad token", http.StatusBadRequest)
+		}
+	*/
+	msg := &DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
+	if err := json.NewDecoder(r.Body).Decode(msg); err != nil {
+		http.Error(w, fmt.Sprintf("Could not decode body: %v", err), http.StatusBadRequest)
+		return
+	}
+	if msg.device != "" {
+		if !math.IsNaN(msg.tmp) {
+			fmt.Printf("pushHandler: device=%s, tmp=%f\n", msg.device, msg.tmp)
+		} else if !math.IsNaN(msg.latitude) && !math.IsNaN(msg.longitude) && !math.IsNaN(msg.accuracy) {
+			fmt.Printf("pushHandler: device=%s, lat=%f, lng=%f, acc=%f\n", msg.device, msg.latitude, msg.longitude, msg.accuracy)
+		}
+	}
+	fmt.Fprint(w, "\"OK\"")
 }
