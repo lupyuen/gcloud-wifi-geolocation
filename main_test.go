@@ -48,6 +48,10 @@ func TestPushTmpThenLocation(t *testing.T) {
 	pushJSON(t, `{ "device": "test1", "latitude": 1.2730656999999999, "longitude": 103.8096223, "accuracy": 40.1 }`, "\"OK\"")
 }
 
+func TestPull(t *testing.T) {
+	pullDevice(t, "test1", "{}")
+}
+
 func TestIndexHandlerNotFound(t *testing.T) {
 	req, err := http.NewRequest("GET", "/404", nil)
 	if err != nil {
@@ -62,6 +66,24 @@ func TestIndexHandlerNotFound(t *testing.T) {
 			status,
 			http.StatusOK,
 		)
+	}
+}
+
+func pullDevice(t *testing.T, device string, expected string) {
+	b := []byte("{}")
+	req, err := http.NewRequest("POST", "/pull?device="+device, bytes.NewBuffer(b))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(pullHandler)
+	handler.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("status: got (%v) want (%v)", status, http.StatusOK)
+	}
+	if rr.Body.String() != expected {
+		t.Errorf("body: got (%v) want (%v)", rr.Body.String(), expected)
 	}
 }
 

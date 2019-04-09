@@ -40,8 +40,11 @@ func main() {
 }
 
 func pullHandler(w http.ResponseWriter, r *http.Request) {
-	device := "test1"
-
+	device := r.URL.Query().Get("device")
+	if device == "" {
+		http.Error(w, "missing device", http.StatusBadRequest)
+		return
+	}
 	enc := json.NewEncoder(os.Stdout)
 	m := map[string]float64{}
 	result, ok := deviceStates.Load(device)
