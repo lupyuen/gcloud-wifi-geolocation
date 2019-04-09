@@ -37,7 +37,7 @@ func TestPushTmp(t *testing.T) {
 }
 
 func TestPullTmp(t *testing.T) {
-	pullDevice(t, "test1", `{"tmp":28.2}`)
+	pullDevice(t, "test1", `{"tmp":28.2}`+"\n")
 }
 
 func TestPushLocation(t *testing.T) {
@@ -52,8 +52,8 @@ func TestPushTmpThenLocation(t *testing.T) {
 	pushJSON(t, `{ "device": "test1", "latitude": 1.2730656999999999, "longitude": 103.8096223, "accuracy": 40.1 }`, "\"OK\"")
 }
 
-func TestPull(t *testing.T) {
-	pullDevice(t, "test1", `{"accuracy":40.1,"latitude":1.2730656999999999,"longitude":103.8096223,"tmp":28.2}`)
+func TestPullTmpLocation(t *testing.T) {
+	pullDevice(t, "test1", `{"accuracy":40.1,"latitude":1.2730656999999999,"longitude":103.8096223,"tmp":28.2}`+"\n")
 }
 
 func TestIndexHandlerNotFound(t *testing.T) {
