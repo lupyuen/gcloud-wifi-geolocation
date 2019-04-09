@@ -27,6 +27,7 @@ var (
 
 func main() {
 	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/pull", pullHandler)
 	http.HandleFunc("/push", pushHandler)
 
 	port := os.Getenv("PORT")
@@ -34,17 +35,35 @@ func main() {
 		port = "8080"
 		log.Printf("Defaulting to port %s", port)
 	}
-
 	log.Printf("Listening on port %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		fmt.Fprint(w, "Hello, World!")
-		return
+func pullHandler(w http.ResponseWriter, r *http.Request) {
+	device := "test1"
+
+	enc := json.NewEncoder(os.Stdout)
+	m := map[string]float64{}
+	result, ok := deviceStates.Load(device)
+	if ok {
+		//  State exists for the device. Return the state.
+		state := result.(*DeviceState)
+		if !math.IsNaN(state.Tmp) {
+			m["tmp"] = state.Tmp
+		}
+		if !math.IsNaN(state.Latitude) {
+			m["latitude"] = state.Latitude
+		}
+		if !math.IsNaN(state.Longitude) {
+			m["longitude"] = state.Longitude
+		}
+		if !math.IsNaN(state.Accuracy) {
+			m["accuracy"] = state.Accuracy
+		}
+	} else {
+		fmt.Printf("no state `%s`\n", device)
 	}
-	http.NotFound(w, r)
+	enc.Encode(m)
 }
 
 func pushHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +106,14 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("updated state `%s`: tmp=%f, lat=%f, lng=%f, acc=%f\n", state.Device, state.Tmp, state.Latitude, state.Longitude, state.Accuracy)
 	}
 	fmt.Fprint(w, "\"OK\"")
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		fmt.Fprint(w, "Hello, World!")
+		return
+	}
+	http.NotFound(w, r)
 }
 
 /*
