@@ -13,11 +13,11 @@ import (
 // DeviceState contains the state of the device: temperature (deg C), location and geolocation accuracy (in metres).
 // The fields must start with an uppercase letter because these fields will be exported for JSON deserialisation.
 type DeviceState struct {
-	Device    string
-	Tmp       float64
-	Latitude  float64
-	Longitude float64
-	Accuracy  float64
+	Device    string  `json:"device"` // When we serialise or deserialise to JSON, we will use the "json" names.
+	Tmp       float64 `json:"tmp"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Accuracy  float64 `json:"accuracy"`
 }
 
 var (
