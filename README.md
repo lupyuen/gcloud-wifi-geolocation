@@ -13,6 +13,11 @@ thethings.io receives WiFi Access Point MAC Addresses and Signal Strength scanne
 
 https://github.com/lupyuen/stm32bluepill-mynewt-sensor/tree/esp8266
 
+Note that this implementation only supports 1 server instance because the sensor and geolocation data are cached in
+the RAM of the same server that's serving the web app. Since this app is written in Go, the single server instance 
+will support a high volume of concurrent requests. With App Engine's Basic Scaling, the server instance
+will be shut down automatically when there are no requests. The RAM will also be cleared.
+
 For privacy, users are required to specify the Device ID when viewing the app. Adapted from:
 
 https://github.com/GoogleCloudPlatform/golang-samples/blob/master/appengine/go11x/helloworld/helloworld.go
