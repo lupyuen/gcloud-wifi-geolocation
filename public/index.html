@@ -47,10 +47,14 @@
             <circle fill="#FFFFFF" opacity="0.5" cx="5.5" cy="5.5" r="5.4999962"></circle>
         </g>
         -->
-        <text dominant-baseline="central" transform="translate(14, 12)" fill="#FFFFFF">-88.8</text>
+        <g transform="translate(14, 12)" fill="#FFFFFF" dominant-baseline="central">
+            <text id="value_text" style="font: 12px sans-serif"></text>
+        </g>
     </g>
 </svg>
-
+</body>
+<!-- Load the turf.js library for computing GeoJSON geometries -->
+<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 <!-- token.js contains:
     var MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN'; 
 -->
@@ -59,19 +63,15 @@
 mapboxgl.accessToken = MAPBOX_TOKEN;
 var lat = 1.2730656999999999  //  TODO
 var lng = 103.8096223  //  TODO
-
+var accuracy = 50;  //  TODO
+    
 //  Create the marker.
 var svg = document.getElementById('marker');
 var marker = new mapboxgl.Marker({ 
     element: svg,
     offset: [0, -27],  //  We have enlarged the icon by 2, so shift the y offset.
-    })  //  Purple.
-    .setLngLat([lng, lat]);
-var marker2 = new mapboxgl.Marker({ 
-    // element: svg,
-    // color: '#803FB1CE' 
-    })  //  Purple.
-    .setLngLat([lng, lat]);
+}).setLngLat([lng, lat]);
+var marker2 = new mapboxgl.Marker().setLngLat([lng, lat]);
 
 //  Create the map.
 var map = new mapboxgl.Map({
@@ -97,6 +97,26 @@ map.on('load', function() {
         }
     }
 
+    //  Create the circle that represents geolocation accuracy.
+    var circle = turf.circle([lng, lat], accuracy, {
+        steps: 16, units: 'meters', properties: {foo: 'bar'}
+    });
+
+    //  Add the circle layer that represents geolocation accuracy.
+    map.addLayer({
+        id: 'accuracy',
+        type: 'fill',
+        source: {
+            type: 'geojson',
+            data: circle
+        },
+        layout: {},
+        paint: {
+            'fill-color': '#803FB1',
+            'fill-opacity': 0.2,
+        },
+    });
+
     //  Add the building layer.
     map.addLayer({
         'id': '3d-buildings',
@@ -107,7 +127,6 @@ map.on('load', function() {
         'minzoom': 15,
         'paint': {
             'fill-extrusion-color': '#aaa',
-
             // use an 'interpolate' expression to add a smooth transition effect to the
             // buildings as the user zooms in
             'fill-extrusion-height': [
@@ -124,6 +143,10 @@ map.on('load', function() {
         }
     }, labelLayerId);
 
+    //  Add the computed geolocation marker.
+    //  marker2.addTo(map);
+    marker.addTo(map);
+
     // Add geolocate control to the map.
     map.addControl(new mapboxgl.GeolocateControl({
         positionOptions: {
@@ -132,9 +155,6 @@ map.on('load', function() {
         trackUserLocation: true
     }));
 
-    //  Add the marker.
-    //  marker2.addTo(map);
-    marker.addTo(map);
 });
 
 /*
@@ -145,6 +165,4 @@ center: [
 });
 */
 </script>
-
-</body>
 </html>
