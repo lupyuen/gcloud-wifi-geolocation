@@ -9,9 +9,9 @@ Cloud Code Function `geolocate`:
 
 https://github.com/lupyuen/thethingsio-wifi-geolocation
 
-thethings.io receives WiFi MAC Address and Signal Strength from STM32 Blue Pill connected to ESP8266 running Apache Mynewt:
+thethings.io receives WiFi Access Point MAC Addresses and Signal Strength scanned by STM32 Blue Pill, running Apache Mynewt connected to ESP8266:
 
-https://github.com/lupyuen/stm32bluepill-mynewt-sensor
+https://github.com/lupyuen/stm32bluepill-mynewt-sensor/tree/esp8266
 
 For privacy, users are required to specify the Device ID when viewing the app. Adapted from:
 
