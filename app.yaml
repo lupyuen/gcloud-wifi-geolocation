@@ -5,3 +5,13 @@ instance_class: B1   #  Basic scaling
 basic_scaling: 
   max_instances: 1   #  Only 1 instance allowed because the app is stateful.
   idle_timeout: 10m  #  The instance will be shut down this amount of time after receiving its last request.
+
+handlers:
+# Map / to public/index.html
+- url: /$
+  static_files: public/index.html
+  upload: public/index.html
+# Map /*.js to public/*.js
+- url: /(.*\.(js|gif|png|jpg))$
+  static_files: public/\1
+  upload: public/.*\.(js|gif|png|jpg)$
