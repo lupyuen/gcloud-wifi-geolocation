@@ -1,3 +1,6 @@
+# Ignore token files
+token.js
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
