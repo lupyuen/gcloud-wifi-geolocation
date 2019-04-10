@@ -1,3 +1,9 @@
+// Render temperature sensor data and geolocation on a map.  The sensor data and geolocation
+// are pushed via HTTPS from thethings.io Cloud Code Trigger "forward_geolocate" and
+// Cloud Code Function "geolocate". The map is rendered using Mapbox GL JS.  Adapted from
+// https://github.com/GoogleCloudPlatform/golang-samples/blob/master/appengine/go11x/helloworld/helloworld.go
+// https://github.com/GoogleCloudPlatform/golang-samples/blob/master/appengine_flexible/pubsub/pubsub.go
+// https://docs.mapbox.com/mapbox-gl-js/example/3d-buildings/
 package main
 
 import (
