@@ -26,6 +26,7 @@
     </g>
 </svg>
 
+<!--  Location Marker  -->
 <svg id='marker' width="54px" height="82px" viewBox="0 0 54 82" text-anchor="middle" style="font: 12px sans-serif">
     <g fill-rule="nonzero" transform="scale(2, 2)">
         <g transform="translate(3.0, 29.0)" fill="#000000">
@@ -54,12 +55,22 @@
             <circle fill="#000000" opacity="0.25" cx="5.5" cy="5.5" r="5.4999962"></circle>
             <circle fill="#FFFFFF" opacity="0.5" cx="5.5" cy="5.5" r="5.4999962"></circle>
         </g>
-        -->
         <g transform="translate(14, 12)" fill="#FFFFFF" dominant-baseline="central">
             <text id="value_text" style="font: 12px sans-serif"></text>
         </g>
+        -->
     </g>
 </svg>
+
+<!--  Temperature Label  -->
+<svg id='label' width="60px" height="82px" viewBox="0 0 60 82" text-anchor="middle" style="font: 12px sans-serif">
+    <g fill-rule="nonzero" transform="scale(2, 2)">
+        <g transform="translate(14, 12)" fill="#FFFFFF" dominant-baseline="central">
+            <text id="label_text" style="font: 12px sans-serif"></text>
+        </g>
+    </g>
+</svg>
+
 </body>
 <!-- Load the turf.js library for computing GeoJSON geometries -->
 <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
@@ -69,27 +80,35 @@
 <script src='token.js'></script>
 <script>
 mapboxgl.accessToken = MAPBOX_TOKEN;
-var lat = 1.2730656999999999;  //  TODO
-var lng = 103.8096223;  //  TODO
+var ACCURACY_LAYER_ID = 'accuracy';
+
+var device = null;
+var tmp = null;
+var lat = 1.2730656999999999;
+var lng = 103.8096223;
+var accuracy = 100;
+
 var zoom = 17;
 var pitch = 45;
 var bearing = -17.6;
-var accuracy = 50;  //  TODO
-var device = null;  //  TODO
     
-//  Create the marker.
-var svg = document.getElementById('marker');
+//  Create the location marker.
+var markerSvg = document.getElementById('marker');
 var marker = new mapboxgl.Marker({ 
-    element: svg,
+    element: markerSvg,
     offset: [0, -27],  //  We have enlarged the icon by 2, so shift the y offset.
 }).setLngLat([lng, lat]);
-var marker2 = new mapboxgl.Marker().setLngLat([lng, lat]);
+
+//  Create the temperature label.
+var labelSvg = document.getElementById('label');
+var label = new mapboxgl.Marker({ 
+    element: labelSvg,
+    offset: [0, -27],  //  We have enlarged the icon by 2, so shift the y offset.
+}).setLngLat([lng, lat]);
 
 //  Create the geolocation control.
 var geolocate = new mapboxgl.GeolocateControl({
-    positionOptions: {
-        enableHighAccuracy: true
-    },
+    positionOptions: { enableHighAccuracy: true },
     trackUserLocation: true
 });
 
@@ -106,18 +125,63 @@ var map = new mapboxgl.Map({
 //  Test state
 var testState = {
     "device": "test1",
-    "latitude": 1.2730656,
-    "longitude": 103.8096,
+    "tmp": 28.95,
+    "latitude": 1.274,
+    "longitude": 103.81,
     "accuracy": 40.1
 };
 
+function updateAccuracy() {
+    //  Update the circle that represents geolocation accuracy.  Based on lat, lng, accuracy.
+
+    //  Construct the geojson circle.
+    var circle = turf.circle([lng, lat], accuracy, {
+        steps: 16, units: 'meters',  //  properties: {foo: 'bar'}
+    });
+    if (map.getLayer(ACCURACY_LAYER_ID)) {
+        //  Remove the circle layer if it exists.
+        map.removeLayer(ACCURACY_LAYER_ID);
+    }
+    if (map.getSource(ACCURACY_LAYER_ID)) {
+        //  Remove the accuracy source if it exists.
+        map.removeSource(ACCURACY_LAYER_ID);
+    }
+    //  Add the circle layerand source.
+    map.addLayer({
+        id: ACCURACY_LAYER_ID,
+        type: 'fill',
+        source: {
+            type: 'geojson',
+            data: circle
+        },
+        layout: {},
+        paint: {
+            'fill-color': '#803FB1',
+            'fill-opacity': 0.2,
+        },
+    });
+}
+
 function updateState(state) {
     //  Given the new server state, update the local state.
-    if (state.latitude && state.longitude && 
-        lat !== state.latitude &&
-        lng !== state.longitude) {
+    //  Update the temperature.
+    if (state.tmp &&
+        tmp !== state.tmp) {
+        tmp = state.tmp;
+        var labelText = document.getElementById('label_text');
+        if (labelText) {
+            labelText.innerHTML = "" + tmp;
+        }
+    }
+    //  Update the location.
+    if (state.latitude && state.longitude && state.accuracy && (
+        lat !== state.latitude  ||
+        lng !== state.longitude ||
+        accuracy !== state.accuracy
+    )) {
         lat = state.latitude;
         lng = state.longitude;
+        accuracy = state.accuracy;
         map.flyTo({ 
             center: [lng, lat],
             zoom: zoom,
@@ -125,6 +189,11 @@ function updateState(state) {
             bearing: bearing,
             speed: 0.3,  //  Default 1.2
         });
+        //  Move the marker and label.
+        marker.setLngLat([lng, lat]);
+        label.setLngLat([lng, lat]);
+        //  Move the accuracy circle.
+        updateAccuracy();
     }
 }
 
@@ -154,15 +223,14 @@ function pollServer() {
 }
 
 geolocate.on('geolocate', function(data) {
+    //  Triggered when geolocated.
     console.log('geolocate', data);
 });
 
-// The 'building' layer in the mapbox-streets vector source contains building-height
-// data from OpenStreetMap.
 map.on('load', function() {
-    // Insert the layer beneath any symbol layer.
+    //  The 'building' layer in the mapbox-streets vector source contains building-height
+    //  data from OpenStreetMap.  Insert the layer beneath any symbol layer.
     var layers = map.getStyle().layers;
-
     var labelLayerId;
     for (var i = 0; i < layers.length; i++) {
         if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
@@ -171,25 +239,8 @@ map.on('load', function() {
         }
     }
 
-    //  Create the circle that represents geolocation accuracy.
-    var circle = turf.circle([lng, lat], accuracy, {
-        steps: 16, units: 'meters', properties: {foo: 'bar'}
-    });
-
-    //  Add the circle layer that represents geolocation accuracy.
-    map.addLayer({
-        id: 'accuracy',
-        type: 'fill',
-        source: {
-            type: 'geojson',
-            data: circle
-        },
-        layout: {},
-        paint: {
-            'fill-color': '#803FB1',
-            'fill-opacity': 0.2,
-        },
-    });
+    //  Add the geolocation accuracy circle.
+    updateAccuracy();
 
     //  Add the building layer.
     map.addLayer({
@@ -218,15 +269,17 @@ map.on('load', function() {
     }, labelLayerId);
 
     //  Add the computed geolocation marker.
-    //  marker2.addTo(map);
     marker.addTo(map);
+    label.addTo(map);
 
     //  Add geolocate control to the map.
     map.addControl(geolocate);
 
-    //  Set polling timer.
+    //  Get device from URL parameters.
     var urlParams = new URLSearchParams(window.location.search);
     device = urlParams.get('device');
+
+    //  Set polling timer.
     window.setInterval(pollServer, 10 * 1000);
 });
 
