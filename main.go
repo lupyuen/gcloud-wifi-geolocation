@@ -138,31 +138,5 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-	func testDeviceStates() {
-		deviceID := "hello"
-
-		// Empty state with no values.
-		state := DeviceState{"", math.NaN(), math.NaN(), math.NaN(), math.NaN()}
-		state.Tmp = 28.1
-
-		// Fetch an item that doesn't exist yet.
-		result, ok := deviceStates.Load(deviceID)
-		if ok {
-			state := result.(*DeviceState)
-			fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
-		} else {
-			fmt.Println("value not found for key: `hello`")
-		}
-
-		// Store an item in the map.
-		deviceStates.Store(deviceID, &state)
-		fmt.Println("added value: `world` for key: `hello`")
-
-		// Fetch the item we just stored.
-		result, ok = deviceStates.Load(deviceID)
-		if ok {
-			state := result.(*DeviceState)
-			fmt.Printf("result: `%f` found for key: `hello`\n", state.Tmp)
-		}
-	}
+gcloud app logs tail -s default & ; gcloud app browse ; fg
 */

@@ -69,9 +69,13 @@
 <script src='token.js'></script>
 <script>
 mapboxgl.accessToken = MAPBOX_TOKEN;
-var lat = 1.2730656999999999  //  TODO
-var lng = 103.8096223  //  TODO
+var lat = 1.2730656999999999;  //  TODO
+var lng = 103.8096223;  //  TODO
+var zoom = 17;
+var pitch = 45;
+var bearing = -17.6;
 var accuracy = 50;  //  TODO
+var device = null;  //  TODO
     
 //  Create the marker.
 var svg = document.getElementById('marker');
@@ -93,11 +97,61 @@ var geolocate = new mapboxgl.GeolocateControl({
 var map = new mapboxgl.Map({
     style: 'mapbox://styles/mapbox/dark-v10',
     center: [lng, lat],  //  Longitude, latitude
-    zoom: 17,
-    pitch: 45,
-    bearing: -17.6,
+    zoom:    0, //  17,
+    pitch:   0, //  45,
+    bearing: 0, //  -17.6,
     container: 'map'
 });
+
+//  Test state
+var testState = {
+    "device": "test1",
+    "latitude": 1.2730656,
+    "longitude": 103.8096,
+    "accuracy": 40.1
+};
+
+function updateState(state) {
+    //  Given the new server state, update the local state.
+    if (state.latitude && state.longitude && 
+        lat !== state.latitude &&
+        lng !== state.longitude) {
+        lat = state.latitude;
+        lng = state.longitude;
+        map.flyTo({ 
+            center: [lng, lat],
+            zoom: zoom,
+            pitch: pitch,
+            bearing: bearing,
+            speed: 0.3,  //  Default 1.2
+        });
+    }
+}
+
+function pollServer() {
+    //  Poll the server for the updated state.
+    var url = './pull?device=' + device;
+    console.log('pollServer', url);
+    if (document.location.protocol == 'file:') {
+        return updateState(testState);
+    }
+    return fetch(url)
+    .then(
+        function(response) {
+            if (response.status !== 200) {
+                console.log('pollServer status:', response.status);
+                return;
+            }
+            response.json().then(function(data) {
+                console.log('pollServer', data);
+                return updateState(data);
+            });
+        }
+    )
+    .catch(function(err) {
+        console.log('pollServer error:', err);
+    });
+}
 
 geolocate.on('geolocate', function(data) {
     console.log('geolocate', data);
@@ -167,17 +221,14 @@ map.on('load', function() {
     //  marker2.addTo(map);
     marker.addTo(map);
 
-    // Add geolocate control to the map.
+    //  Add geolocate control to the map.
     map.addControl(geolocate);
 
+    //  Set polling timer.
+    var urlParams = new URLSearchParams(window.location.search);
+    device = urlParams.get('device');
+    window.setInterval(pollServer, 10 * 1000);
 });
 
-/*
-map.flyTo({
-center: [
--74.50 + (Math.random() - 0.5) * 10,
-40 + (Math.random() - 0.5) * 10]
-});
-*/
 </script>
 </html>
