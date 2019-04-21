@@ -1,5 +1,9 @@
 # gcloud-wifi-geolocation
-Web application for Blue Pill Geolocation based on Google Cloud Standard AppEngine Go
+Go web application for Blue Pill Geolocation based on Google Cloud App Engine Standard Environment
+
+Check out the article:
+
+https://medium.com/@ly.lee/connect-stm32-blue-pill-to-esp8266-with-apache-mynewt-7edceb9e3b8d
 
 `gcloud-wifi-geolocation` is a Go web application hosted on Google Cloud Standard App Engine that
 renders realtime temperature sensor data and geolocation on a map.  The map is rendered using Mapbox GL JS.
