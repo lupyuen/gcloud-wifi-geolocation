@@ -199,7 +199,7 @@ function updateState(state) {
 
 function pollServer() {
     //  Poll the server for the updated state.
-    var url = './pull?device=' + device;
+    var url = './pull?device=' + device + '&t=' + new Date().valueOf();
     console.log('pollServer', url);
     if (document.location.protocol == 'file:') {
         return updateState(testState);
